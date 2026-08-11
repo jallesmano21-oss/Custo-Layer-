@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e1b4b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CustoLayer">
+<meta name="mobile-web-app-capable" content="yes">
+<title>CustoLayer — Calculadora 3D</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-input: #252836;
+    --border: #2e3348;
+    --text: #e8eaed;
+    --text-muted: #9ca3af;
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+    padding: 28px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    position: relative;
+  }
+  header p {
+    margin-top: 6px;
+    color: #a5b4fc;
+    font-size: 14px;
+    position: relative;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 18px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .tab:hover { background: var(--bg-input); color: var(--text); }
+  .tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 18px 0 12px;
+    color: var(--text-muted);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+  }
+  input::placeholder { color: #6b7280; }
+
+  button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  }
+  .primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+  .secondary {
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .secondary:hover { background: #2d3144; }
+  .danger {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+  .danger:hover { background: rgba(239,68,68,0.25); }
+  .edit-btn {
+    background: rgba(99,102,241,0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(99,102,241,0.3);
+  }
+  .edit-btn:hover { background: rgba(99,102,241,0.25); }
+  .small { padding: 8px 12px; font-size: 13px; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .colorline {
+    display: grid;
+    grid-template-columns: 1fr 120px auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 10px;
+    padding: 12px;
+    background: var(--bg-input);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  @media (max-width: 520px) {
+    .colorline { grid-template-columns: 1fr 100px auto; }
+  }
+
+  .totalbox {
+    background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    font-size: 15px;
+  }
+
+  .result {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .metric {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric span:first-child {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .metric b {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .metric .value {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .muted { color: var(--text-muted); font-size: 13px; }
+  .green { color: var(--success) !important; }
+  .red { color: #f87171 !important; }
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 36px 20px;
+    font-size: 15px;
+  }
+  .hidden { display: none !important; }
+
+  #settingsSaved {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 10px;
+    color: #6ee7b7;
+    font-size: 13px;
+  }
+
+  .metric.highlight {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));
+    border-color: rgba(16,185,129,0.35);
+  }
+  .metric.highlight b { color: var(--success); }
+
+  .backup-box {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>CustoLayer</h1>
+  <p>Calculadora de impressão 3D</p>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="show('calc',this)">🖨️ Impressão</button>
+    <button class="tab" onclick="show('stock',this)">🧵 Filamentos</button>
+    <button class="tab" onclick="show('settings',this)">⚡ Configurações</button>
+    <button class="tab" onclick="show('history',this)">📋 Histórico</button>
+  </div>
+
+  <!-- ABA IMPRESSÃO -->
+  <section id="calc">
+    <div class="card">
+      <h2>Nova impressão</h2>
+      <div class="grid">
+        <div>
+          <label>Nome do projeto</label>
+          <input id="piece" placeholder="Ex.: Chaveiro Pokémon">
+        </div>
+        <div>
+          <label>Tempo de impressão (horas)</label>
+          <input id="hours" type="number" min="0" step=".1" placeholder="4.5">
+        </div>
+        <div>
+          <label>Preço de venda (R$)</label>
+          <input id="sale" type="number" min="0" step=".01" placeholder="20.00">
+        </div>
+        <div>
+          <label>Margem desejada (%)</label>
+          <input id="margin" type="number" min="0" step="1" value="60" placeholder="60">
+        </div>
+      </div>
+
+      <h3>Filamentos usados</h3>
+      <div id="colorLines"></div>
+      <button class="secondary small" onclick="addLine()" style="margin-top:6px">＋ Adicionar cor</button>
+      <div id="liveTotal"></div>
+
+      <div style="margin-top:20px">
+        <button class="primary" onclick="calculate()">Calcular projeto</button>
+      </div>
+    </div>
+
+    <div class="card" id="calcResult">
+      <h2>Resultado</h2>
+      <div class="empty">Adicione as cores e quantidades e clique em Calcular.</div>
+    </div>
+  </section>
+
+  <!-- ABA FILAMENTOS -->
+  <section id="stock" class="hidden">
+    <div class="card">
+      <h2 id="stockTitle">Cadastrar rolo</h2>
+      <div class="grid">
+        <div><label>Nome</label><input id="fname" placeholder="PLA Preto"></div>
+        <div><label>Material</label><input id="fmat" placeholder="PLA"></div>
+        <div><label>Cor</label><input id="fcolor" placeholder="Preto"></div>
+        <div><label>Peso do rolo cheio (g)</label><input id="fweight" type="number" value="1000"></div>
+        <div><label>Peso atual (g)</label><input id="fcurrent" type="number" value="1000"></div>
+        <div><label>Valor pago (R$)</label><input id="fprice" type="number" step=".01" placeholder="89.90"></div>
+      </div>
+      <div class="btn-group" style="margin-top:16px">
+        <button class="primary" id="filamentBtn" onclick="saveFilament()">Adicionar rolo</button>
+        <button class="secondary hidden" id="cancelEditBtn" onclick="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Meus filamentos</h2>
+      <div id="stockList"></div>
+    </div>
+  </section>
+
+  <!-- ABA CONFIGURAÇÕES -->
+  <section id="settings" class="hidden">
+    <div class="card">
+      <h2>Energia e máquina</h2>
+      <p class="muted" style="margin-bottom:18px">Configure uma vez. Os valores serão usados automaticamente nos cálculos.</p>
+      <div class="grid">
+        <div>
+          <label>Tarifa de energia (R$/kWh)</label>
+          <input id="kwhPrice" type="number" min="0" step=".0001" placeholder="0.95">
+        </div>
+        <div>
+          <label>Consumo médio da impressora (W)</label>
+          <input id="watts" type="number" min="0" step="1" placeholder="120">
+        </div>
+        <div>
+          <label>Valor da impressora (R$)</label>
+          <input id="machineValue" type="number" min="0" step="1" placeholder="2500">
+        </div>
+        <div>
+          <label>Vida útil estimada (horas)</label>
+          <input id="machineLife" type="number" min="1" step="1" placeholder="5000">
+        </div>
+      </div>
+      <div style="margin-top:18px">
+        <button class="primary" onclick="saveSettings()">Salvar configuração</button>
+      </div>
+      <div id="settingsSaved" class="hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>Backup e transferência</h2>
+      <p class="muted" style="margin-bottom:14px">
+        Exporte seus dados (filamentos, configurações e histórico) para um arquivo.
+        Depois é só importar no outro dispositivo (celular ↔ PC).
+      </p>
+      <div class="backup-box">
+        <button class="primary" onclick="exportData()">📤 Exportar dados</button>
+        <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importar dados</button>
+        <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+      </div>
+    </div>
+  </section>
+
+  <!-- ABA HISTÓRICO -->
+  <section id="history" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+        <h2 style="margin:0">Histórico de impressões</h2>
+        <button class="danger small" onclick="clearHistory()">Apagar histórico</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const STORAGE_KEYS = {
+  filaments: 'custolayer_filaments',
+  history: 'custolayer_history',
+  settings: 'custolayer_settings'
+};
+
+let filaments = JSON.parse(localStorage.getItem(STORAGE_KEYS.filaments) || '[]');
+let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
+let settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || JSON.stringify({
+  kwhPrice: 0.95,
+  watts: 120,
+  machineValue: 2500,
+  machineLife: 5000
+}));
+let editingIndex = -1;
+
+const money = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const $ = id => document.getElementById(id);
+
+function save() {
+  localStorage.setItem(STORAGE_KEYS.filaments, JSON.stringify(filaments));
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+}
+
+function show(id, btn) {
+  document.querySelectorAll('main > section').forEach(x => x.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  btn.classList.add('active');
+  if (id === 'stock') renderStock();
+  if (id === 'history') renderHistory();
+  if (id === 'settings') loadSettings();
+  if (id === 'calc') renderLines();
+}
+
+// ========== CONFIGURAÇÕES ==========
+function loadSettings() {
+  $('kwhPrice').value = settings.kwhPrice;
+  $('watts').value = settings.watts;
+  $('machineValue').value = settings.machineValue;
+  $('machineLife').value = settings.machineLife;
+
+  const kwhH = (settings.watts / 1000).toFixed(3);
+  const depH = settings.machineLife > 0 ? (settings.machineValue / settings.machineLife) : 0;
+
+  const el = $('settingsSaved');
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <strong>Atual:</strong> ${money(settings.kwhPrice)}/kWh &nbsp;•&nbsp;
+    ${settings.watts} W (${kwhH} kWh/h) &nbsp;•&nbsp;
+    Depreciação: ${money(depH)}/hora
+  `;
+}
+
+function saveSettings() {
+  const p = +$('kwhPrice').value;
+  const w = +$('watts').value;
+  const mv = +$('machineValue').value;
+  const ml = +$('machineLife').value;
+
+  if (p < 0 || w < 0 || mv < 0 || ml <= 0) {
+    return alert('Informe valores válidos. Vida útil deve ser maior que zero.');
+  }
+
+  settings = { kwhPrice: p, watts: w, machineValue: mv, machineLife: ml };
+  save();
+  loadSettings();
+  alert('Configuração salva com sucesso!');
+}
+
+// ========== FILAMENTOS ==========
+function saveFilament() {
+  const name = $('fname').value.trim();
+  const mat = $('fmat').value.trim() || 'PLA';
+  const color = $('fcolor').value.trim();
+  const weight = +$('fweight').value;
+  const current = +$('fcurrent').value;
+  const price = +$('fprice').value;
+
+  if (!name || weight <= 0 || current < 0 || price < 0) {
+    return alert('Preencha nome, pesos e valor corretamente.');
+  }
+
+  const data = { name, mat, color, weight, current, price };
+
+  if (editingIndex >= 0) {
+    filaments[editingIndex] = data;
+    alert('Rolo atualizado!');
+  } else {
+    filaments.push(data);
+    alert('Rolo cadastrado!');
+  }
+
+  save();
+  cancelEdit();
+  renderStock();
+  renderLines();
+}
+
+function editFilament(i) {
+  const f = filaments[i];
+  editingIndex = i;
+  $('fname').value = f.name;
+  $('fmat').value = f.mat;
+  $('fcolor').value = f.color;
+  $('fweight').value = f.weight;
+  $('fcurrent').value = f.current;
+  $('fprice').value = f.price;
+  $('stockTitle').textContent = '✏️ Editar rolo';
+  $('filamentBtn').textContent = 'Salvar alterações';
+  $('cancelEditBtn').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editingIndex = -1;
+  $('fname').value = '';
+  $('fmat').value = '';
+  $('fcolor').value = '';
+  $('fweight').value = 1000;
+  $('fcurrent').value = 1000;
+  $('fprice').value = '';
+  $('stockTitle').textContent = 'Cadastrar rolo';
+  $('filamentBtn').textContent = 'Adicionar rolo';
+  $('cancelEditBtn').classList.add('hidden');
+}
+
+function removeFilament(i) {
+  if (confirm('Excluir este rolo?')) {
+    filaments.splice(i, 1);
+    save();
+    renderStock();
+    renderLines();
+    if (editingIndex === i) cancelEdit();
+  }
+}
+
+function renderStock() {
+  const el = $('stockList');
+  if (!filaments.length) {
+    el.innerHTML = '<div class="empty">Nenhum rolo cadastrado ainda.</div>';
+    return;
+  }
+
+  el.innerHTML = filaments.map((f, i) => {
+    const costg = f.price / f.weight;
+    const pct = (f.current / f.weight * 100).toFixed(0);
+    return `
+      <div class="row">
+        <div>
+          <b>${f.name}</b>
+          <div class="muted">${f.mat}${f.color ? ' • ' + f.color : ''}</div>
+          <div style="margin-top:4px">${f.current.toFixed(1)}g restantes (${pct}%) • ${money(f.current * costg)}</div>
+          <div class="muted">Custo: ${money(costg)}/g</div>
+        </div>
+        <div class="btn-group">
+          <button class="edit-btn small" onclick="editFilament(${i})">Editar</button>
+          <button class="danger small" onclick="removeFilament(${i})">Excluir</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ========== CÁLCULO ==========
+function addLine(idx = 0) {
+  const wrap = $('colorLines');
+  const div = document.createElement('div');
+  div.className = 'colorline';
+  div.innerHTML = `
+    <div>
+      <label>Filamento / cor</label>
+      <select class="fsel">
+        ${filaments.length
+          ? filaments.map((f, i) => `<option value="${i}">${f.name}${f.color ? ' — ' + f.color : ''}</option>`).join('')
+          : '<option value="">Cadastre um rolo primeiro</option>'}
+      </select>
+    </div>
+    <div>
+      <label>Quantidade (g)</label>
+      <input class="fg" type="number" min="0" step=".1" value="0">
+    </div>
+    <button class="danger small" onclick="this.parentElement.remove(); updateLive()">✕</button>
+  `;
+  wrap.appendChild(div);
+  div.querySelector('.fsel').value = idx;
+  div.querySelector('.fg').addEventListener('input', updateLive);
+  updateLive();
+}
+
+function renderLines() {
+  $('colorLines').innerHTML = '';
+  addLine(0);
+}
+
+function getLines() {
+  return [...document.querySelectorAll('.colorline')]
+    .map(d => ({
+      idx: +d.querySelector('.fsel').value,
+      g: +d.querySelector('.fg').value || 0
+    }))
+    .filter(x => x.g > 0);
+}
+
+function updateLive() {
+  const lines = getLines();
+  const mat = lines.reduce((s, x) => {
+    const f = filaments[x.idx];
+    return s + (f ? x.g * f.price / f.weight : 0);
+  }, 0);
+  const g = lines.reduce((s, x) => s + x.g, 0);
+  $('liveTotal').innerHTML = g > 0
+    ? `<div class="totalbox"><b>Filamento:</b> ${g.toFixed(1)} g &nbsp;•&nbsp; ${money(mat)}</div>`
+    : '';
+}
+
+function calculate() {
+  const lines = getLines();
+  if (!lines.length) return alert('Adicione pelo menos uma cor com quantidade.');
+  if (lines.some(x => !filaments[x.idx] || x.g > filaments[x.idx].current)) {
+    return alert('Uma das cores não tem filamento suficiente no estoque.');
+  }
+
+  const h = +$('hours').value || 0;
+  const s = +$('sale').value || 0;
+  const margin = +$('margin').value || 0;
+
+  let material = 0;
+  lines.forEach(x => {
+    material += x.g * (filaments[x.idx].price / filaments[x.idx].weight);
+  });
+
+  const kwhPorHora = settings.watts / 1000;
+  const kwh = h * kwhPorHora;
+  const energy = kwh * settings.kwhPrice;
+
+  const depPorHora = settings.machineLife > 0 ? settings.machineValue / settings.machineLife : 0;
+  const depreciação = h * depPorHora;
+
+  const total = material + energy + depreciação;
+  const profit = s - total;
+  const suggested = margin < 100 ? total / (1 - margin / 100) : total * 2;
+
+  const details = lines.map(x => {
+    const f = filaments[x.idx];
+    const c = x.g * f.price / f.weight;
+    return `
+      <div class="row" style="padding:10px 0">
+        <div>
+          <b>${f.name}</b>
+          <div class="muted">${x.g.toFixed(1)} g</div>
+        </div>
+        <b>${money(c)}</b>
+      </div>
+    `;
+  }).join('');
+
+  $('calcResult').innerHTML = `
+    <h2>Resultado</h2>
+    <h3 style="margin-top:0">Cores utilizadas</h3>
+    ${details}
+    <div class="result">
+      <div class="metric">
+        <span>Filamento</span>
+        <b>${lines.reduce((s, x) => s + x.g, 0).toFixed(1)} g</b>
+        <span class="value">${money(material)}</span>
+      </div>
+      <div class="metric">
+        <span>Energia</span>
+        <b>${kwh.toFixed(3)} kWh</b>
+        <span class="value">${money(energy)}</span>
+      </div>
+      <div class="metric">
+        <span>Depreciação</span>
+        <b>${h.toFixed(1)} h</b>
+        <span class="value">${money(depreciação)}</span>
+      </div>
+      <div class="metric">
+        <span>Custo total</span>
+        <b>${money(total)}</b>
+      </div>
+      <div class="metric highlight">
+        <span>Preço sugerido (${margin}%)</span>
+        <b>${money(suggested)}</b>
+      </div>
+      <div class="metric">
+        <span>Venda informada</span>
+        <b>${money(s)}</b>
+      </div>
+      <div class="metric">
+        <span>Lucro real</span>
+        <b class="${profit >= 0 ? 'green' : 'red'}">${money(profit)}</b>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <button class="primary" onclick='registerPrint(${JSON.stringify(lines)}, ${h}, ${s}, ${material}, ${kwh}, ${energy}, ${depreciação}, ${total}, ${profit})'>
+        Registrar impressão e descontar estoque
+      </button>
+    </div>
+  `;
+}
+
+function registerPrint(lines, h, s, material, kwh, energy, depreciação, total, profit) {
+  const name = $('piece').value.trim() || 'Sem nome';
+  lines.forEach(x => filaments[x.idx].current -= x.g);
+
+  const used = lines.map(x => ({ name: filaments[x.idx].name, g: x.g }));
+
+  history.unshift({
+    date: new Date().toLocaleString('pt-BR'),
+    piece: name,
+    used, h, s, material, kwh, energy, depreciação, total, profit
+  });
+
+  save();
+  renderStock();
+  renderLines();
+
+  $('piece').value = '';
+  $('hours').value = '';
+  $('sale').value = '';
+
+  alert('Impressão registrada! O estoque foi atualizado.');
+  $('calcResult').innerHTML = '<h2>Resultado</h2><div class="empty">Impressão registrada com sucesso ✓</div>';
+}
+
+// ========== HISTÓRICO ==========
+function clearHistory() {
+  if (!history.length) return alert('O histórico já está vazio.');
+  if (confirm('Tem certeza que deseja apagar todo o histórico? Essa ação não pode ser desfeita.')) {
+    history = [];
+    save();
+    renderHistory();
+    alert('Histórico apagado.');
+  }
+}
+
+function renderHistory() {
+  const el = $('historyList');
+  if (!history.length) {
+    el.innerHTML = '<div class="empty">Nenhuma impressão registrada ainda.</div>';
+    return;
+  }
+
+  el.innerHTML = history.map(x => `
+    <div class="row">
+      <div>
+        <b>${x.piece}</b>
+        <div class="muted" style="margin-top:2px">${x.date}</div>
+        <div class="muted" style="margin-top:4px">${x.used.map(u => u.name + ' ' + u.g.toFixed(1) + 'g').join(' • ')}</div>
+        <div style="margin-top:6px; font-size:13px">
+          Material ${money(x.material)} • 
+          Energia ${money(x.energy)} • 
+          Deprec. ${money(x.depreciação || 0)} • 
+          Total <b>${money(x.total)}</b> • 
+          Venda ${money(x.s)} • 
+          <span class="${x.profit >= 0 ? 'green' : 'red'}">Lucro ${money(x.profit)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ========== EXPORT / IMPORT ==========
+function exportData() {
+  const data = {
+    app: 'CustoLayer',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    filaments,
+    settings,
+    history
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CustoLayer_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('Arquivo de backup baixado! Agora você pode mover esse arquivo para o outro dispositivo.');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      if (!data.filaments || !data.settings) {
+        return alert('Arquivo inválido. Escolha um backup do CustoLayer.');
+      }
+
+      if (!confirm('Isso vai substituir os dados atuais (filamentos, configurações e histórico). Continuar?')) {
+        return;
+      }
+
+      filaments = data.filaments || [];
+      settings = data.settings || settings;
+      history = data.history || [];
+      save();
+
+      loadSettings();
+      renderStock();
+      renderLines();
+      renderHistory();
+
+      alert('Dados importados com sucesso!');
+    } catch (err) {
+      alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ========== INICIALIZAÇÃO ==========
+loadSettings();
+renderLines();
+</script>
+</body>
+</html>
